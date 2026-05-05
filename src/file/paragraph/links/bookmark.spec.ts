@@ -17,7 +17,7 @@ describe("Bookmark", () => {
 
     it("should create a bookmark with three root elements", () => {
         const newJson = Utility.jsonify(bookmark);
-        assert.equal(newJson.rootKey, undefined);
+        assert.equal(newJson.rootKey, "w:bookmark");
         assert.equal(newJson.start.rootKey, "w:bookmarkStart");
         assert.equal(newJson.children[0].rootKey, "w:r");
         assert.equal(newJson.end.rootKey, "w:bookmarkEnd");

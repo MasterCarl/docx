@@ -8,7 +8,7 @@
  *
  * @module
  */
-import { XmlComponent } from "@file/xml-components";
+import { BaseXmlComponent, type IContext, type IXmlableObject, XmlComponent } from "@file/xml-components";
 import { bookmarkUniqueNumericIdGen } from "@util/convenience-functions";
 
 import type { ParagraphChild } from "../paragraph";
@@ -67,7 +67,7 @@ export type IBookmarkOptions = {
  * });
  * ```
  */
-export class Bookmark {
+export class Bookmark extends BaseXmlComponent {
     private readonly bookmarkUniqueNumericId = bookmarkUniqueNumericIdGen();
 
     public readonly start: BookmarkStart;
@@ -75,11 +75,29 @@ export class Bookmark {
     public readonly end: BookmarkEnd;
 
     public constructor(options: IBookmarkOptions) {
+        super("w:bookmark");
+
         const linkId = this.bookmarkUniqueNumericId();
 
         this.start = new BookmarkStart(options.id, linkId);
         this.children = options.children;
         this.end = new BookmarkEnd(linkId);
+    }
+
+    public prepForXml(context: IContext): readonly IXmlableObject[] {
+        const start = this.start.prepForXml(context);
+        const children = this.children.flatMap((child) => {
+            const prepared = child.prepForXml(context);
+
+            if (prepared === undefined) {
+                return [];
+            }
+
+            return Array.isArray(prepared) ? prepared : [prepared];
+        });
+        const end = this.end.prepForXml(context);
+
+        return [start, ...children, end].filter((xmlObject): xmlObject is IXmlableObject => xmlObject !== undefined);
     }
 }
 

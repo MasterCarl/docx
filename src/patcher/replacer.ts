@@ -7,7 +7,7 @@ import xml from "xml";
 import type { Element } from "xml-js";
 
 import { Formatter } from "@export/formatter";
-import type { IContext, XmlComponent } from "@file/xml-components";
+import type { BaseXmlComponent, IContext } from "@file/xml-components";
 
 import { type IPatch, PatchType } from "./from-docx";
 import { findRunElementIndexWithToken, splitRunElement } from "./paragraph-split-inject";
@@ -64,7 +64,13 @@ export const replacer = ({
     }
 
     for (const renderedParagraph of renderedParagraphs) {
-        const textJson = patch.children.map((c) => toJson(xml(formatter.format(c as XmlComponent, context)))).map((c) => c.elements![0]);
+        const textJson = patch.children
+            .map((child) => formatter.format(child as BaseXmlComponent, context))
+            .map((formattedChild) => (Array.isArray(formattedChild) ? formattedChild : [formattedChild]))
+            .flat()
+            .map((xmlNode) => toJson(xml(xmlNode)))
+            .map((childJson) => childJson.elements ?? [])
+            .flat();
 
         switch (patch.type) {
             case PatchType.DOCUMENT: {

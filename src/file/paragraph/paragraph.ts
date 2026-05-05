@@ -129,15 +129,6 @@ export class Paragraph extends FileChild {
 
         if (options.children) {
             for (const child of options.children) {
-                if (child instanceof Bookmark) {
-                    this.root.push(child.start);
-                    for (const textRun of child.children) {
-                        this.root.push(textRun);
-                    }
-                    this.root.push(child.end);
-                    continue;
-                }
-
                 this.root.push(child);
             }
         }

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { IViewWrapper } from "@file/document-wrapper";
 import type { File } from "@file/file";
+import { Bookmark } from "@file/paragraph/links";
 import { Paragraph, TextRun } from "@file/paragraph";
 
 import { PatchType } from "./from-docx";
@@ -821,6 +822,39 @@ describe("replacer", () => {
             // Verify the rendered text is correct
             const paragraphs = traverse(json);
             expect(paragraphs[0].text).to.equal("AXBCYD");
+        });
+
+        it("should support Bookmark children", () => {
+            const { element, didFindOccurrence } = replacer({
+                json: JSON.parse(JSON.stringify(MOCK_JSON)),
+                patch: {
+                    type: PatchType.PARAGRAPH,
+                    children: [
+                        new Bookmark({
+                            id: "myBookmark",
+                            children: [new TextRun("Bookmarked text")],
+                        }),
+                    ],
+                },
+                patchText: "{{header_adjective}}",
+                context: {
+                    file: {} as unknown as File,
+                    viewWrapper: {
+                        Relationships: {},
+                    } as unknown as IViewWrapper,
+                    stack: [],
+                },
+            });
+
+            expect(didFindOccurrence).toBe(true);
+
+
+            const target = element.elements![0].elements![0];
+            const startIndex = target.elements!.findIndex((el) => el.name === "w:bookmarkStart");
+            const endIndex = target.elements!.findIndex((el) => el.name === "w:bookmarkEnd");
+            expect(startIndex).toBe(endIndex - 2);
+            expect(target.elements![startIndex].attributes!["w:name"]).toBe("myBookmark");
+            expect(JSON.stringify(target.elements![startIndex + 1])).toContain("Bookmarked text");
         });
     });
 });

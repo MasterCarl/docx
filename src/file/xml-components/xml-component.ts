@@ -91,15 +91,17 @@ export abstract class XmlComponent extends BaseXmlComponent {
         // eslint-disable-next-line functional/immutable-data
         context.stack.push(this);
 
-        // Recursively prepare all children for serialization
-        const children = this.root
-            .map((comp) => {
-                if (comp instanceof BaseXmlComponent) {
-                    return comp.prepForXml(context);
-                }
-                return comp;
-            })
-            .filter((comp) => comp !== undefined); // Exclude undefined
+        // Recursively prepare all children for serialization.
+        // Some components emit multiple sibling XML nodes by returning an array.
+        const children = this.root.flatMap((comp) => {
+            const prepared = comp instanceof BaseXmlComponent ? comp.prepForXml(context) : comp;
+
+            if (prepared === undefined) {
+                return [];
+            }
+
+            return Array.isArray(prepared) ? prepared : [prepared];
+        });
 
         // Pop this component from the stack
         // eslint-disable-next-line functional/immutable-data
